@@ -1,21 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov 14 22:54:32 2019
-
 @author: Normandy Bryson
 CSC535 Data Mining - Final Project
 Evaluating Classification Methods
 """
-
-'''import os
-dirpath = os.getcwd()
-print("current directory is : " + dirpath)
-
-os.chdir("\\Users\\A\\Desktop")
-
-dirpath = os.getcwd()
-print("current directory is : " + dirpath)'''
-
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix
 from sklearn.linear_model import LogisticRegression
@@ -29,23 +17,39 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.utils import resample
+
 
 #sns.set_style("white")
 
 #f, ax = plt.subplots(figsize=(30, 30))
 
-#here we have our usable dataset with X corresponding to the attributes and y corresponding to the class outcome
+#here we have our usable dataset with X corresponding to the attributes and 
+# y corresponding to the class outcome
 data = pd.read_csv('transfusion.csv')
-X = np.array(data[["Months", "Times", "Blood", "Frequency"]])
-y = np.array(data["Donated"])
 
-'''this shows count of class outcomes
-sns.countplot(x='Donated', data=data)'''
+y = data.Donated
+x = data.drop("Donated", axis=1)
 
-'''using shuffle isn't allowed because no sparse matrix but sklearn will let us do this anyways without warning us if you use this will lower accuracy'''
-#seed = 42
-#X, y = shuffle(X, y, random_state=seed)
+data_majority = data[data.Donated==0]
+data_minority = data[data.Donated==1]
 
+
+##here upsampling the minority class
+data_minority_upsample = resample(data_minority, replace=True, n_samples=570, 
+random_state=123)
+
+##creating new dataframe from majority class and upsampled minority class
+df_upsampled = pd.concat([data_majority, data_minority_upsample])
+
+#here check to see each class label has equal number of outcomes
+#print(df_upsampled.Donated.value_counts())
+
+y = df_upsampled.Donated
+X = df_upsampled.drop('Donated', axis=1)
+
+#this shows count of class outcomes
+sns.countplot(x="Donated", data=df_upsampled)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size = 0.20, random_state=0)
@@ -56,14 +60,12 @@ clf.fit(X_train, y_train)
 print(clf.class_prior_)
 y_pred = clf.predict(X_test)
 
-
 #print("Accuracy:", accuracy_score(y_test, y_pred))
-'''will use confusion matrix in report'''
+'''confusion matrix'''
 #print(confusion_matrix(y_test, y_pred))
 print("Naive Bayes ")
 print(classification_report(y_test, y_pred))
 print("______________________________________")
-
 
 """using logistic regression because the outcome variable is binary 0 or 1"""
 logreg = LogisticRegression(solver='lbfgs')
@@ -73,9 +75,6 @@ print(accuracy_score(y_test, y_pred))
 print("Logistic ")
 print(classification_report(y_test, y_pred))
 print("______________________________________")
-
-
-
 
 """K-nearest neighbors with continous attributes"""
 knn = KNeighborsClassifier(n_neighbors=9)
@@ -95,8 +94,6 @@ for k in range(1, 13):
     knn.fit(X_train, y_train)
     print("this is KNN " ,k,  knn.score(X_test, y_test))'''
 
-
-
 """support vector machines"""
 X = StandardScaler().fit_transform(X)
 clf = SVC(kernel="linear",gamma="auto")
@@ -105,9 +102,3 @@ y_pred = clf.predict(X_test)
 print("SVM ", accuracy_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 print("______________________________________")
-
-
-
-
-
-
